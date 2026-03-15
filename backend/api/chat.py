@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
-from rag.qa_chain import ask_question
+from knowledge_engine.qa_chain import ask_question
 
 router = APIRouter()
 
