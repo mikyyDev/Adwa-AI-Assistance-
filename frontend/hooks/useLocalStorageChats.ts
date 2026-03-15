@@ -40,13 +40,15 @@ export function useLocalStorageChat() {
     });
   };
 
-  // Load from localStorage (SSR-safe)
   useEffect(() => {
+    let parsedMessages: Message[] | null = null;
+    let parsedRecentChats: ChatSession[] | null = null;
+
     const saved = localStorage.getItem(ACTIVE_CHAT_KEY);
     if (saved) {
       try {
-        setMessages(JSON.parse(saved));
-      } catch (e) {
+        parsedMessages = JSON.parse(saved);
+      } catch {
         console.error('Failed to parse saved messages');
       }
     }
@@ -54,16 +56,23 @@ export function useLocalStorageChat() {
     const savedRecentChats = localStorage.getItem(RECENT_CHATS_KEY);
     if (savedRecentChats) {
       try {
-        setRecentChats(JSON.parse(savedRecentChats));
-      } catch (e) {
+        parsedRecentChats = JSON.parse(savedRecentChats);
+      } catch {
         console.error('Failed to parse saved recent chats');
       }
     }
 
-    setIsLoaded(true);
+    queueMicrotask(() => {
+      if (parsedMessages) {
+        setMessages(parsedMessages);
+      }
+      if (parsedRecentChats) {
+        setRecentChats(parsedRecentChats);
+      }
+      setIsLoaded(true);
+    });
   }, []);
 
-  // Persist to localStorage
   useEffect(() => {
     if (isLoaded) {
       localStorage.setItem(ACTIVE_CHAT_KEY, JSON.stringify(messages));

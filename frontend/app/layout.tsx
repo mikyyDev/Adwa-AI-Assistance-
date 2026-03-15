@@ -19,7 +19,9 @@ export const metadata: Metadata = {
   title: "Adwa AI Assistance",
   description: "A modern AI chat interface for Adwa history assistance",
   icons: {
-    icon: "/favicon.ico",
+    icon: "/adwa.jpg",
+    shortcut: "/adwa.jpg",
+    apple: "/adwa.jpg",
   },
 };
 

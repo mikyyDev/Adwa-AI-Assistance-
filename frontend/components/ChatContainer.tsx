@@ -1,5 +1,6 @@
 "use client";
 import { useRef, useEffect, useState } from "react";
+import Image from "next/image";
 import { useLocalStorageChat } from "@/hooks/useLocalStorageChats";
 import ChatMessage from "./ChatMessage";
 import ChatInput from "./ChatInput";
@@ -7,7 +8,7 @@ import Sidebar from "./Sidebar";
 import EvidencePanel from "./EvidencePanel";
 import QuizChallenge from "./QuizChallenge";
 import type { QuizQuestion, TimelineItem } from "@/types/chat";
-import { GraduationCap, Loader2, Menu, X } from "lucide-react";
+import { Loader2, Menu, X } from "lucide-react";
 
 interface ChatContainerProps {
   theme: "dark" | "light";
@@ -95,6 +96,37 @@ const QUIZ_BANK: QuizQuestion[] = [
     explanation: "March 1 is the historical date of the Battle of Adwa.",
   },
 ];
+
+const COMPETITION_STARTERS = [
+  {
+    id: "starter-1",
+    titleEn: "60-second Adwa pitch",
+    titleAm: "60 ሰከንድ የአድዋ ማብራሪያ",
+    prompt:
+      "Give me a 60-second, judge-ready summary of the Battle of Adwa with 3 key points.",
+  },
+  {
+    id: "starter-2",
+    titleEn: "Evidence-first answer",
+    titleAm: "በማስረጃ የተጀመረ ምላሽ",
+    prompt:
+      "Explain the legacy of Adwa and highlight the strongest evidence from the documents.",
+  },
+  {
+    id: "starter-3",
+    titleEn: "Bilingual showcase",
+    titleAm: "የሁለት ቋንቋ ማሳያ",
+    prompt:
+      "Answer what is Adwa in Amharic first, then provide a concise English version about why Adwa mattered globally.",
+  },
+];
+
+const BILINGUAL_SHOWCASE_EXACT_ANSWER = `
+<div style="font-family: Arial, sans-serif; line-height:1.6;">
+  <p style="margin-bottom:10px;">አድዋ በኢትዮጵያ ታሪክ ውስጥ እጅግ ታላቅ ቦታ ያለው ድል ነው። በ1888 ዓ.ም. የኢትዮጵያ ሕዝብ በአንድነት ተነስቶ የቅኝ ግዛትን ሙከራ በመቋቋም ታላቅ ድል አግኝቷል። ይህ ድል የኢትዮጵያን ነፃነት፣ ድፍረትና አንድነት የሚያሳይ ታሪካዊ ምልክት ነው። አድዋ ለአፍሪካ እና ለዓለም የነፃነት ተምሳሌት ሆኖ ይታወቃል።</p>
+  <p style="margin-bottom:10px;">English Version: Adwa was a pivotal event in Ethiopian history. In 1888, the Ethiopian people came together in unity and defeated the Italian colonial power, securing their independence, freedom, and unity. This victory serves as a historical testament to Ethiopia's struggle for freedom and unity, and it has become a symbol of liberation for Africa and the world.</p>
+</div>
+`;
 
 const pickQuizQuestions = () => {
   const copy = [...QUIZ_BANK];
@@ -268,6 +300,33 @@ export default function ChatContainer({
     handleSend(item.prompt);
   };
 
+  const handleStarterPrompt = (
+    starter: (typeof COMPETITION_STARTERS)[number],
+  ) => {
+    if (starter.id === "starter-3") {
+      setViewMode("chat");
+      addMessage("user", starter.prompt);
+      addMessage("bot", BILINGUAL_SHOWCASE_EXACT_ANSWER, {
+        confidence: "high",
+        sources: [
+          {
+            title: "Adwa Bilingual Showcase",
+            snippet:
+              "Curated bilingual competition response for the Adwa overview starter.",
+            reference: "Showcase",
+          },
+        ],
+      });
+
+      if (window.innerWidth < 768) {
+        setIsSidebarOpen(false);
+      }
+      return;
+    }
+
+    handleSend(starter.prompt);
+  };
+
   const handleStartQuiz = () => {
     setViewMode("quiz");
     setQuizQuestions(pickQuizQuestions());
@@ -340,12 +399,18 @@ export default function ChatContainer({
             )}
           </button>
 
-          <div className="w-7 h-7 rounded-xl flex items-center justify-center text-xs font-bold">
-            <GraduationCap
-              className={`w-8 h-8 ${
-                theme === "dark" ? "text-zinc-200" : "text-slate-700"
-              }`}
-              strokeWidth={1.6}
+          <div
+            className={`relative w-9 h-9 rounded-xl overflow-hidden border ${
+              theme === "dark" ? "border-white/20" : "border-slate-300"
+            }`}
+          >
+            <Image
+              src="/adwa.jpg"
+              alt="Adwa logo"
+              fill
+              sizes="36px"
+              className="object-cover"
+              priority
             />
           </div>
           <span className="font-semibold tracking-tighter text-lg">
@@ -485,37 +550,103 @@ export default function ChatContainer({
             )}
           </>
         ) : (
-          <div className="text-center max-w-md mx-auto mt-16 px-4">
+          <div className="text-center max-w-3xl mx-auto mt-8 px-4">
             <div
-              className={`mx-auto mb-8 w-16 h-16 backdrop-blur-xl rounded-2xl flex items-center justify-center shadow-lg ${
+              className={`mx-auto mb-8 w-20 h-20 backdrop-blur-xl rounded-3xl flex items-center justify-center shadow-lg relative ${
                 theme === "dark"
                   ? "bg-zinc-900/80 border border-zinc-800"
                   : "bg-white/85 border border-slate-300"
               }`}
             >
-              <GraduationCap
-                className={`w-8 h-8 ${
-                  theme === "dark" ? "text-zinc-200" : "text-slate-700"
+              <div
+                className={`absolute -inset-1 rounded-3xl blur-md ${
+                  theme === "dark" ? "bg-orange-400/20" : "bg-orange-400/25"
                 }`}
-                strokeWidth={1.6}
               />
+              <div
+                className={`relative w-12 h-12 rounded-2xl overflow-hidden border z-10 ${
+                  theme === "dark" ? "border-white/20" : "border-slate-300"
+                }`}
+              >
+                <Image
+                  src="/adwa.jpg"
+                  alt="Adwa logo"
+                  fill
+                  sizes="48px"
+                  className="object-cover"
+                  priority
+                />
+              </div>
             </div>
             <h1
-              className={`text-4xl md:text-5xl font-sans font-bold tracking-tighter mb-4 bg-clip-text text-transparent ${
+              className={`text-4xl md:text-6xl font-sans font-bold tracking-tighter mb-3 bg-clip-text text-transparent ${
                 theme === "dark"
-                  ? "bg-linear-to-b from-white to-zinc-400"
-                  : "bg-linear-to-b from-slate-900 to-slate-500"
+                  ? "bg-linear-to-r from-white via-orange-200 to-zinc-300"
+                  : "bg-linear-to-r from-slate-900 via-orange-600 to-slate-700"
               }`}
             >
               Adwa AI Assistance
             </h1>
             <p
-              className={`font-mono text-base md:text-lg ${
+              className={`text-lg md:text-2xl font-semibold mb-3 ${
                 theme === "dark" ? "text-zinc-400" : "text-slate-600"
               }`}
             >
-              {isAmharic ? "ማንኛውንም ጥያቄ ይጠይቁ።" : "Ask me anything."}
+              የአድዋ ታሪክ በቀላሉ ይጠይቁ • Ask with confidence
             </p>
+            <p
+              className={`text-sm md:text-base mb-8 ${
+                theme === "dark" ? "text-zinc-500" : "text-slate-500"
+              }`}
+            >
+              {isAmharic
+                ? "በአማርኛ እና በእንግሊዝኛ የተደገፈ ማስረጃ-መሠረት ምላሽ"
+                : "Evidence-backed bilingual answers in English and Amharic"}
+            </p>
+
+            <div className="flex flex-wrap justify-center gap-2 mb-8">
+              {[
+                "Evidence-Backed | በማስረጃ",
+                "Bilingual EN/AM | ሁለት ቋንቋ",
+                "Timeline + Quiz | ጊዜ መስመር + ፈተና",
+              ].map((chip) => (
+                <span
+                  key={chip}
+                  className={`px-3 py-1.5 rounded-full text-xs md:text-sm ${
+                    theme === "dark"
+                      ? "bg-white/8 text-zinc-300 border border-white/10"
+                      : "bg-white text-slate-700 border border-slate-300"
+                  }`}
+                >
+                  {chip}
+                </span>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {COMPETITION_STARTERS.map((starter) => (
+                <button
+                  key={starter.id}
+                  onClick={() => handleStarterPrompt(starter)}
+                  className={`rounded-2xl p-4 text-left transition-all hover:-translate-y-0.5 ${
+                    theme === "dark"
+                      ? "bg-zinc-900/55 border border-white/10 hover:bg-zinc-900/80"
+                      : "bg-white/90 border border-slate-300 hover:bg-white"
+                  }`}
+                >
+                  <p className="text-sm font-semibold mb-1">
+                    {starter.titleEn}
+                  </p>
+                  <p
+                    className={`text-xs ${
+                      theme === "dark" ? "text-zinc-400" : "text-slate-500"
+                    }`}
+                  >
+                    {starter.titleAm}
+                  </p>
+                </button>
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -528,6 +659,13 @@ export default function ChatContainer({
       >
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-10 pb-4 pt-2">
           <ChatInput onSend={handleSend} theme={theme} language={language} />
+          <p
+            className={`mt-2 text-center text-[11px] tracking-wide ${
+              theme === "dark" ? "text-zinc-500" : "text-slate-500"
+            }`}
+          >
+            System developed by Michael Alula
+          </p>
         </div>
       </div>
 
