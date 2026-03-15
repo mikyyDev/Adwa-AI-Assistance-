@@ -7,10 +7,7 @@ from knowledge_engine.retriever import get_relevant_documents
 load_dotenv()
 
 api_key = os.getenv("GROQ_API_KEY")
-if not api_key:
-    raise ValueError("GROQ_API_KEY is not set in your environment or .env file.")
-
-client = Groq(api_key=api_key)
+client = Groq(api_key=api_key) if api_key else None
 
 
 def _build_sources(docs: list[Any]) -> list[dict[str, str]]:
@@ -57,6 +54,13 @@ def ask_question(question: str, language: str = "en") -> dict[str, Any]:
     """
     Ask a question to the RAG system and get a response from Groq.
     """
+    if client is None:
+        return {
+            "answer": "Server configuration error: GROQ_API_KEY is missing.",
+            "sources": [],
+            "confidence": "low",
+        }
+
     scored_docs = get_relevant_documents(question, k=4, min_relevance=0.25)
     docs = [doc for doc, _ in scored_docs]
 
