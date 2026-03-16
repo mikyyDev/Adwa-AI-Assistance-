@@ -1,6 +1,5 @@
-from knowledge_engine.vectordb import load_vector_db
-
 def get_retriever():
+    from knowledge_engine.vectordb import load_vector_db
 
     vectordb = load_vector_db()
 
@@ -16,6 +15,8 @@ def get_relevant_documents(
     k: int = 4,
     min_relevance: float = 0.25,
 ):
+    from knowledge_engine.vectordb import load_vector_db
+
     vectordb = load_vector_db()
 
     try:

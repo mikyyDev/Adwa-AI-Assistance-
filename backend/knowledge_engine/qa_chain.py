@@ -2,7 +2,6 @@ import os
 from typing import Any
 from dotenv import load_dotenv
 from groq import Groq
-from knowledge_engine.retriever import get_relevant_documents
 
 load_dotenv()
 
@@ -54,6 +53,8 @@ def ask_question(question: str, language: str = "en") -> dict[str, Any]:
     """
     Ask a question to the RAG system and get a response from Groq.
     """
+    from knowledge_engine.retriever import get_relevant_documents
+
     if client is None:
         return {
             "answer": "Server configuration error: GROQ_API_KEY is missing.",

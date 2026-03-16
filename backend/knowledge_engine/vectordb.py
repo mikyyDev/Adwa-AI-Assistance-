@@ -1,10 +1,6 @@
 import json
 import shutil
 from pathlib import Path
-from langchain_chroma import Chroma
-from knowledge_engine.embeddings import get_embeddings
-from knowledge_engine.loader import load_documents
-from knowledge_engine.splitter import split_documents
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 DB_PATH = BASE_DIR / "chroma_db"
@@ -12,6 +8,8 @@ DATA_PATH = BASE_DIR / "data"
 INDEX_META_FILE = "index_meta.json"
 
 def create_vector_db(chunks):
+    from langchain_chroma import Chroma
+    from knowledge_engine.embeddings import get_embeddings
 
     embeddings = get_embeddings()
 
@@ -72,6 +70,9 @@ def _needs_reindex() -> bool:
 
 
 def ensure_vector_db_current() -> None:
+    from knowledge_engine.loader import load_documents
+    from knowledge_engine.splitter import split_documents
+
     db_dir = DB_PATH
     if not db_dir.exists() or _needs_reindex():
         if db_dir.exists():
@@ -83,6 +84,9 @@ def ensure_vector_db_current() -> None:
 
 
 def load_vector_db():
+    from langchain_chroma import Chroma
+    from knowledge_engine.embeddings import get_embeddings
+
     ensure_vector_db_current()
 
     embeddings = get_embeddings()
