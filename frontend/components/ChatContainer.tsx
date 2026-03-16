@@ -211,10 +211,17 @@ export default function ChatContainer({
     addMessage("user", content);
     setLoading(true);
 
-    try {
-      const apiBaseUrl =
-        process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
+    const deployedBackendUrl = "https://adwa-ai-assistance-1.onrender.com";
+    const isHostedFrontend =
+      typeof window !== "undefined" &&
+      (window.location.hostname.includes("vercel.app") ||
+        window.location.hostname.includes("onrender.com"));
+    const apiBaseUrl =
+      process.env.NEXT_PUBLIC_API_BASE_URL ||
+      (isHostedFrontend ? deployedBackendUrl : "http://127.0.0.1:8000");
+    const backendLabel = apiBaseUrl.replace(/\/$/, "");
 
+    try {
       const res = await fetch(`${apiBaseUrl}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -266,8 +273,8 @@ export default function ChatContainer({
         "bot",
         isConnectionError
           ? isAmharic
-            ? "ይቅርታ፣ backend ሰርቨሩ አልተገናኘም (127.0.0.1:8000)። backend ለማስነሳት: uvicorn app:app --reload --host 127.0.0.1 --port 8000"
-            : "Could not reach the backend server at 127.0.0.1:8000. Start it with: uvicorn app:app --reload --host 127.0.0.1 --port 8000"
+            ? `ይቅርታ፣ backend ሰርቨሩ አልተገናኘም (${backendLabel})።`
+            : `Could not reach the backend server at ${backendLabel}.`
           : isAmharic
             ? `ስህተት ተፈጥሯል: ${rawErrorMessage}`
             : `Server error: ${rawErrorMessage}`,
