@@ -130,6 +130,73 @@ _STOP_WORDS = {
     "about",
     "tell",
     "me",
+    # Common auxiliary / function words often missed by a narrow stop-list
+    "was",
+    "were",
+    "be",
+    "been",
+    "being",
+    "have",
+    "has",
+    "had",
+    "do",
+    "does",
+    "did",
+    "will",
+    "would",
+    "could",
+    "should",
+    "can",
+    "may",
+    "might",
+    "shall",
+    "must",
+    "with",
+    "that",
+    "this",
+    "these",
+    "those",
+    "it",
+    "its",
+    "he",
+    "she",
+    "they",
+    "we",
+    "you",
+    "i",
+    "my",
+    "your",
+    "his",
+    "her",
+    "our",
+    "their",
+    "by",
+    "at",
+    "up",
+    "as",
+    "so",
+    "but",
+    "if",
+    "than",
+    "not",
+    "also",
+    "just",
+    "from",
+    "into",
+    "during",
+    "give",
+    "get",
+    "got",
+    "let",
+    "any",
+    "all",
+    "each",
+    "more",
+    "most",
+    "some",
+    "such",
+    "too",
+    "very",
 }
 
 
@@ -254,15 +321,9 @@ def ask_question(question: str, language: str = "en") -> dict[str, Any]:
             "confidence": "low",
         }
 
-    if not _has_keyword_support(question, docs):
-        return {
-            "answer": refusal_text_am if language == "am" else refusal_text_en,
-            "sources": [],
-            "confidence": "low",
-        }
-
-    # Keep prompt compact to reduce timeout/rate-limit failures on long chunks.
-    context = "\n\n".join([doc.page_content[:500] for doc in docs[:2]])
+    # Build context from up to 4 documents, using more of each chunk so the LLM
+    # has sufficient information to answer instead of triggering its refusal rule.
+    context = "\n\n".join([doc.page_content[:1500] for doc in docs[:4]])
 
     language_instruction = (
         "Respond fully in Amharic (Ethiopic script)."
