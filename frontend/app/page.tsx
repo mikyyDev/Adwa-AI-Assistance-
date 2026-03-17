@@ -10,16 +10,18 @@ export default function Home() {
   const [theme, setTheme] = useState<ThemeMode>("dark");
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem("chatTheme");
-    if (savedTheme === "dark" || savedTheme === "light") {
-      setTheme(savedTheme);
-      return;
-    }
+    queueMicrotask(() => {
+      const savedTheme = localStorage.getItem("chatTheme");
+      if (savedTheme === "dark" || savedTheme === "light") {
+        setTheme(savedTheme);
+        return;
+      }
 
-    const prefersDark = window.matchMedia(
-      "(prefers-color-scheme: dark)",
-    ).matches;
-    setTheme(prefersDark ? "dark" : "light");
+      const prefersDark = window.matchMedia(
+        "(prefers-color-scheme: dark)",
+      ).matches;
+      setTheme(prefersDark ? "dark" : "light");
+    });
   }, []);
 
   useEffect(() => {
