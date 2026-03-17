@@ -98,13 +98,17 @@ export default function ChatMessage({
 
   useEffect(() => {
     if (isUser || !shouldType) {
-      setDisplayedText(message.content);
-      setIsTypingFinished(true);
+      queueMicrotask(() => {
+        setDisplayedText(message.content);
+        setIsTypingFinished(true);
+      });
       return;
     }
 
-    setDisplayedText("");
-    setIsTypingFinished(false);
+    queueMicrotask(() => {
+      setDisplayedText("");
+      setIsTypingFinished(false);
+    });
 
     const timeout = window.setTimeout(() => {
       setDisplayedText(message.content);
