@@ -14,6 +14,7 @@ def get_relevant_documents(
     query: str,
     k: int = 4,
     min_relevance: float = 0.25,
+    allow_unfiltered: bool = False,
 ):
     from knowledge_engine.vectordb import load_vector_db
 
@@ -32,4 +33,10 @@ def get_relevant_documents(
         if score is not None and score >= min_relevance
     ]
 
-    return filtered
+    if filtered:
+        return filtered
+
+    if allow_unfiltered:
+        return [(doc, score if score is not None else 0.0) for doc, score in scored_docs]
+
+    return []

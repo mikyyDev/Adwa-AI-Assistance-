@@ -12,15 +12,42 @@ interface ChatMessageProps {
 const THINKING_DELAY_MS = 650;
 
 const hasHtmlTags = (value: string) => /<[^>]+>/.test(value);
+const isEmojiSectionTitle = (value: string) =>
+  /^[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]\s+[^\n]+$/u.test(value);
 
 const escapeHtml = (value: string) =>
   value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
+const formatListItem = (value: string) => {
+  const trimmed = value.trim();
+  if (/^date\s*:/i.test(trimmed)) return `📅 ${trimmed}`;
+  if (/^location\s*:/i.test(trimmed)) return `📍 ${trimmed}`;
+  if (/^(parties involved|participants?)\s*:/i.test(trimmed)) {
+    return `👥 ${trimmed}`;
+  }
+  if (/^(outcome|result)\s*:/i.test(trimmed)) return `🏆 ${trimmed}`;
+  return trimmed;
+};
+
+const normalizeRawText = (raw: string) =>
+  raw
+    .replace(/\r\n?/g, "\n")
+    // Convert markdown underlined headings into explicit section lines.
+    .replace(/(^|\n)([^\n]+)\n[=-]{3,}(?=\n|$)/g, "$1📌 $2")
+    // Convert markdown hash headings.
+    .replace(/(^|\n)#{1,6}\s+/g, "$1📌 ")
+    // Normalize alternate bullet symbols.
+    .replace(/(^|\n)•\s+/g, "$1* ")
+    .replace(/\s+\*\s+/g, "\n* ")
+    .replace(
+      /(\bkey facts[^:\n]*:)/gi,
+      (_, phrase: string) => `\n📌 ${phrase.trim()}\n`,
+    );
+
 const toStyledHtml = (raw: string) => {
   if (hasHtmlTags(raw)) return raw;
 
-  const lines = raw
-    .replace(/\r\n?/g, "\n")
+  const lines = normalizeRawText(raw)
     .split("\n")
     .map((line) => line.trim());
 
@@ -43,6 +70,11 @@ const toStyledHtml = (raw: string) => {
       continue;
     }
 
+    if (/^[=-]{3,}$/.test(line)) {
+      flushList();
+      continue;
+    }
+
     const bulletMatch = line.match(/^[-*]\s+(.+)$/);
     const orderedMatch = line.match(/^\d+[.)]\s+(.+)$/);
 
@@ -50,7 +82,7 @@ const toStyledHtml = (raw: string) => {
       if (listType && listType !== "ul") flushList();
       listType = "ul";
       listBuffer.push(
-        `<li style=\"margin-bottom:6px;\">${escapeHtml(bulletMatch[1])}</li>`,
+        `<li style=\"margin-bottom:6px;\">${escapeHtml(formatListItem(bulletMatch[1]))}</li>`,
       );
       continue;
     }
@@ -66,7 +98,7 @@ const toStyledHtml = (raw: string) => {
 
     flushList();
 
-    if (line.endsWith(":")) {
+    if (line.endsWith(":") || isEmojiSectionTitle(line)) {
       html.push(
         `<h3 style=\"margin-top:20px; margin-bottom:8px;\">${escapeHtml(line)}</h3>`,
       );
@@ -88,33 +120,25 @@ export default function ChatMessage({
 }: ChatMessageProps) {
   const isUser = message.role === "user";
 
-  const [displayedText, setDisplayedText] = useState(
-    isUser || !shouldType ? message.content : "",
-  );
-
-  const [isTypingFinished, setIsTypingFinished] = useState(
-    isUser || !shouldType,
-  );
+  const [revealedBotMessageId, setRevealedBotMessageId] = useState<
+    string | null
+  >(null);
 
   useEffect(() => {
     if (isUser || !shouldType) {
-      setDisplayedText(message.content);
-      setIsTypingFinished(true);
       return;
     }
 
-    setDisplayedText("");
-    setIsTypingFinished(false);
-
     const timeout = window.setTimeout(() => {
-      setDisplayedText(message.content);
-      setIsTypingFinished(true);
+      setRevealedBotMessageId(message.id);
     }, THINKING_DELAY_MS);
 
     return () => window.clearTimeout(timeout);
-  }, [message.content, isUser, shouldType]);
+  }, [message.id, isUser, shouldType]);
 
-  const content = isTypingFinished ? message.content : displayedText;
+  const isTypingFinished =
+    isUser || !shouldType || revealedBotMessageId === message.id;
+  const content = message.content;
   const styledBotContent =
     !isUser && isTypingFinished ? toStyledHtml(content) : "";
 
@@ -136,7 +160,7 @@ export default function ChatMessage({
         `}
       >
         {isUser ? (
-          <span>{displayedText}</span>
+          <span>{message.content}</span>
         ) : isTypingFinished ? (
           <span
             className="block [&_p]:mb-3 [&_p]:leading-7 [&_ul]:my-3 [&_ul]:space-y-1.5 [&_ol]:my-3 [&_ol]:space-y-1.5 [&_li]:leading-7 [&_h3]:text-[1.06rem] [&_h3]:font-semibold [&_h3]:mt-3 [&_h3]:mb-2"

@@ -6,6 +6,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 DB_PATH = BASE_DIR / "chroma_db"
 DATA_PATH = BASE_DIR / "data"
 INDEX_META_FILE = "index_meta.json"
+EMBEDDING_VERSION = "hashing-v1"
+_VDB_CACHE = None
 
 def create_vector_db(chunks):
     from langchain_chroma import Chroma
@@ -35,7 +37,10 @@ def _current_data_snapshot() -> dict:
                 }
             )
 
-    return {"files": files}
+    return {
+        "files": files,
+        "embedding_version": EMBEDDING_VERSION,
+    }
 
 
 def _meta_path() -> Path:
@@ -84,6 +89,11 @@ def ensure_vector_db_current() -> None:
 
 
 def load_vector_db():
+    global _VDB_CACHE
+
+    if _VDB_CACHE is not None:
+        return _VDB_CACHE
+
     from langchain_chroma import Chroma
     from knowledge_engine.embeddings import get_embeddings
 
@@ -96,4 +106,5 @@ def load_vector_db():
         embedding_function=embeddings
     )
 
-    return vectordb
+    _VDB_CACHE = vectordb
+    return _VDB_CACHE
