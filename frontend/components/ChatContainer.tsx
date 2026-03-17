@@ -211,7 +211,7 @@ export default function ChatContainer({
     addMessage("user", content);
     setLoading(true);
 
-    const deployedBackendUrl = "https://adwa-ai-assistance-1.onrender.com";
+    const deployedBackendUrl = "https://adwa-ai-backend.onrender.com";
     const isHostedFrontend =
       typeof window !== "undefined" &&
       (window.location.hostname.includes("vercel.app") ||
