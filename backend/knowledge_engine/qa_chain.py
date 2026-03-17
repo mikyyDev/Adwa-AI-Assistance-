@@ -11,6 +11,14 @@ load_dotenv()
 api_key = os.getenv("GROQ_API_KEY")
 client = Groq(api_key=api_key) if api_key else None
 
+# HashingVectorizer cosine similarity scores are generally lower than semantic
+# embedding scores, so a lower threshold is required to avoid over-filtering.
+HASHING_EMBEDDINGS_MIN_RELEVANCE = 0.2
+
+# How many document chunks and characters per chunk to include in the LLM prompt.
+MAX_CONTEXT_DOCS = 4
+MAX_CHARS_PER_DOC = 1000
+
 
 def _normalize_text(value: str) -> str:
         return re.sub(r"\s+", " ", value.strip().lower())
@@ -157,7 +165,7 @@ def _has_keyword_support(question: str, docs: list[Any]) -> bool:
         for keyword in keywords
         if keyword in context_text or re.sub(r"\s+", "", keyword) in compact_context
     )
-    required = 1 if len(keywords) <= 2 else max(1, len(keywords) // 2)
+    required = 1
     return matched >= required
 
 
@@ -217,7 +225,7 @@ def ask_question(question: str, language: str = "en") -> dict[str, Any]:
 
     try:
         # First pass: strict relevance to reduce hallucinations.
-        scored_docs = get_relevant_documents(question, k=4, min_relevance=0.35)
+        scored_docs = get_relevant_documents(question, k=4, min_relevance=HASHING_EMBEDDINGS_MIN_RELEVANCE)
         docs = [doc for doc, _ in scored_docs]
 
         # Second pass: relaxed retrieval for names/entities that may score lower due to OCR/chunking.
@@ -254,15 +262,8 @@ def ask_question(question: str, language: str = "en") -> dict[str, Any]:
             "confidence": "low",
         }
 
-    if not _has_keyword_support(question, docs):
-        return {
-            "answer": refusal_text_am if language == "am" else refusal_text_en,
-            "sources": [],
-            "confidence": "low",
-        }
-
     # Keep prompt compact to reduce timeout/rate-limit failures on long chunks.
-    context = "\n\n".join([doc.page_content[:500] for doc in docs[:2]])
+    context = "\n\n".join([doc.page_content[:MAX_CHARS_PER_DOC] for doc in docs[:MAX_CONTEXT_DOCS]])
 
     language_instruction = (
         "Respond fully in Amharic (Ethiopic script)."
